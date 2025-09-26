@@ -1,6 +1,5 @@
 **一个简单查看国内国外IPv4/v6的分流情况的页面**  
 
-
 PC端：  
 
 
@@ -12,10 +11,13 @@ PC端：
 ![GitHub图像](/phone.jpg)  
 
 
+演示网站：[ip.cyang.net](https://ip.cyang.net/)  
+
+
 接口来源：  
 
- [Yinghualuo](https://v2ex.com/t/1149457).  
+ [Yinghualuo](https://v2ex.com/t/1149457)  
 
 
- [ipinfo.io](https://ipinfo.io/).
+ [ipinfo.io](https://ipinfo.io/)  
  
