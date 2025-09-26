@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IP 地址与网络连通性检测</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+            background-color: #f4f6f9;
+            color: #333;
+            line-height: 1.5;
+            padding: 15px;
+            margin: 0;
+        }
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            max-width: 950px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            margin-top: 0;
+            margin-bottom: 25px;
+            color: #1a1a1a;
+        }
+        h2 {
+            color: #1a1a1a;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 8px;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+        .loading {
+            color: #888;
+            text-align: center;
+            padding: 10px;
+        }
+        /* IP 结果网格布局 */
+        .ip-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+        }
+        .ip-card {
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            background-color: #fdfdfd;
+        }
+        .ip-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 1em;
+            font-weight: 600;
+            color: #0056b3;
+        }
+        /* IP 卡片内部详情布局 */
+        .ip-details {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 5px 10px;
+            font-size: 0.9em;
+        }
+        .ip-details strong {
+            color: #555;
+            text-align: right;
+            white-space: nowrap;
+        }
+        .ip-details span {
+            word-break: break-all;
+            color: #111;
+        }
+
+        /* 连通性列表 */
+        .connectivity-list {
+            list-style: none;
+            padding: 0;
+        }
+        .connectivity-list li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 7px 0;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 0.95em;
+        }
+        .connectivity-list li:last-child {
+            border-bottom: none;
+        }
+        .status {
+            display: flex;
+            align-items: center;
+            padding: 3px 9px;
+            border-radius: 12px;
+            font-weight: 500;
+            font-size: 0.85em;
+            white-space: nowrap;
+        }
+        .status-ok { background-color: #e6ffed; color: #28a745; }
+        .status-error { background-color: #fff0f0; color: #dc3545; }
+        .status-loading { background-color: #f0f0f0; color: #666; }
+        .latency {
+            font-weight: normal;
+            font-size: 0.9em;
+            color: #555;
+            margin-left: 6px;
+        }
+        .status-icon {
+            width: 16px;
+            height: 16px;
+            margin-right: 5px;
+            flex-shrink: 0;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 25px;
+            font-size: 0.85em;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>IP 地址与网络连通性检测</h1>
+
+    <h2>网络连通性</h2>
+    <ul class="connectivity-list" id="connectivity-results"></ul>
+
+    <h2>本机出口 IP</h2>
+    <h3>国内出口 IP</h3>
+    <div id="ip-results-cn" class="ip-grid">
+        <div class="loading">正在加载国内 IP 信息...</div>
+    </div>
+
+    <h3>国外出口 IP</h3>
+    <div id="ip-results-global" class="ip-grid">
+        <div class="loading">正在加载国外 IP 信息...</div>
+    </div>
+</div>
+
+<div class="footer">
+    <p>灵感来源: ip.skk.moe</p>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // IP 服务 API 列表
+    const ipApis = [
+        // 国内 IP 服务
+        { name: 'IPIP.NET (Free)', url: 'https://myip.ipip.net/json', type: 'json', isDomestic: true },
+        { name: 'PCOnline', url: 'https://whois.pconline.com.cn/ipJson.jsp', type: 'json', isDomestic: true },
+        { name: '淘宝', url: 'https://ip.taobao.com/outGetIpInfo?accessKey=alibaba-inc&ip=myip', type: 'json', isDomestic: true },
+        { name: 'So-hu', url: 'https://pv.sohu.com/cityjson', type: 'text', isDomestic: true },
+
+        // 国际 IP 服务
+        { name: 'IP.SB', url: 'https://api.ip.sb/geoip', type: 'json' },
+        { name: 'IPInfo', url: 'https://ipinfo.io/json', type: 'json' },
+        { name: 'IP-API.com', url: 'https://ip-api.com/json', type: 'json' },
+        { name: 'Cloudflare', url: 'https://www.cloudflare.com/cdn-cgi/trace', type: 'text' },
+        { name: 'SeeIP.org', url: 'https://api.seeip.org/jsonip', type: 'json' }
+    ];
+
+    const testUrls = [
+        { name: '百度 (Baidu)', url: 'https://www.baidu.com/favicon.ico' },
+        { name: '网易云音乐 (Netease)', url: 'https://music.163.com/favicon.ico' },
+        { name: 'GitHub', url: 'https://github.com/favicon.ico' },
+        { name: 'YouTube', url: 'https://www.youtube.com/favicon.ico' }
+    ];
+
+    const cnContainer = document.getElementById('ip-results-cn');
+    const globalContainer = document.getElementById('ip-results-global');
+    const connectivityResultsContainer = document.getElementById('connectivity-results');
+    const TIMEOUT = 5000;
+
+    cnContainer.innerHTML = '';
+    globalContainer.innerHTML = '';
+
+    // 定义 SVG 成功图标
+    const successIconSvg = `<svg class="status-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+      <path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425a.247.247 0 0 1 .02-.022Z"/>
+    </svg>`;
+    // 定义 SVG 错误图标
+    const errorIconSvg = `<svg class="status-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+      <path d="M11.414 11.414a.5.5 0 0 0 .707.707L15 12.707l-2.879 2.879a.5.5 0 0 0 .707.707L15.707 13.414a.5.5 0 0 0-.707-.707L12 14.293l-2.879-2.879a.5.5 0 0 0-.707.707L11.293 15 .586 1.293a.5.5 0 0 0-.707.707L11.414 11.414z"/>
+      <path d="M12.707 13.414a.5.5 0 0 0-.707-.707L10 14.293l-2.879-2.879a.5.5 0 0 0-.707.707L9.293 15 .586 1.293a.5.5 0 0 0-.707.707L12.707 13.414z"/>
+      <path d="M11.414 4.586a.5.5 0 0 0 .707.707L15 6.293l-2.879 2.879a.5.5 0 0 0 .707.707L15.707 7.414a.5.5 0 0 0-.707-.707L12 8.293l-2.879-2.879a.5.5 0 0 0-.707.707L11.293 9.707 4.586.293a.5.5 0 0 0-.707.707L11.414 4.586z"/>
+      <path d="M12.707 7.414a.5.5 0 0 0-.707-.707L10 8.293l-2.879-2.879a.5.5 0 0 0-.707.707L9.293 9.707 4.586.293a.5.5 0 0 0-.707.707L12.707 7.414z"/>
+      <path d="M4.586 11.414a.5.5 0 0 0 .707.707L8 12.707l-2.879 2.879a.5.5 0 0 0 .707.707L8.707 13.414a.5.5 0 0 0-.707-.707L5 14.293l-2.879-2.879a.5.5 0 0 0-.707.707L4.293 15 .586 1.293a.5.5 0 0 0-.707.707L4.586 11.414z"/>
+      <path d="M6.293 12.707a.5.5 0 0 0-.707-.707L3 13.414l-2.879-2.879a.5.5 0 0 0-.707.707L2.293 15 .586 1.293a.5.5 0 0 0-.707.707L6.293 12.707z"/>
+    </svg>`;
+
+
+    // 连通性测试
+    testUrls.forEach(site => {
+        const listItem = document.createElement('li');
+        listItem.innerHTML = `<span>${site.name}</span><span class="status status-loading">测试中...</span>`;
+        connectivityResultsContainer.appendChild(listItem);
+        
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), TIMEOUT);
+        const startTime = performance.now();
+
+        fetch(site.url + '?t=' + new Date().getTime(), { mode: 'no-cors', cache: 'no-store', signal: controller.signal })
+            .then(() => {
+                const latency = Math.round(performance.now() - startTime);
+                const statusSpan = listItem.querySelector('.status');
+                statusSpan.innerHTML = `${successIconSvg} 可访问 <span class="latency">(${latency} ms)</span>`;
+                statusSpan.className = 'status status-ok';
+            })
+            .catch(error => {
+                const statusSpan = listItem.querySelector('.status');
+                statusSpan.innerHTML = `${errorIconSvg} ${error.name === 'AbortError' ? '超时' : '无法访问'}`;
+                statusSpan.className = 'status status-error';
+            })
+            .finally(() => clearTimeout(timeoutId));
+    });
+
+    // IP 查询
+    ipApis.forEach(api => {
+        const card = document.createElement('div');
+        card.className = 'ip-card';
+        card.innerHTML = `<div class="loading">${api.name} 查询中...</div>`;
+        
+        let container = api.isDomestic ? cnContainer : globalContainer;
+        container.appendChild(card);
+
+        fetch(api.url, { cache: 'no-store' })
+            .then(response => {
+                if (!response.ok) throw new Error('Network response was not ok');
+                // 特殊处理 So-hu 和 Cloudflare
+                if (api.name === 'So-hu') {
+                    return response.text().then(text => {
+                        const jsonText = text.replace('var returnCitySN = ', '').replace(/;/g, '');
+                        return JSON.parse(jsonText);
+                    });
+                } else if (api.name === 'Cloudflare') {
+                    return response.text().then(text => {
+                        const lines = text.split('\n');
+                        const traceData = {};
+                        lines.forEach(line => {
+                            const [key, value] = line.split('=');
+                            if (key) traceData[key] = value;
+                        });
+                        return traceData;
+                    });
+                }
+                return api.type === 'text' ? response.text() : response.json();
+            })
+            .then(data => {
+                let ip = 'N/A', country = 'N/A', region = 'N/A', city = 'N/A', org = 'N/A';
+
+                if (api.type === 'json') {
+                    switch(api.name) {
+                        case 'IP.SB': ip = data.ip; country = data.country; region = data.region; city = data.city; org = data.organization; break;
+                        case 'IPInfo': ip = data.ip; country = data.country; region = data.region; city = data.city; org = data.org; break;
+                        case 'IPIP.NET (Free)': ip = data.data.ip; country = data.data.location[0]; region = data.data.location[1]; city = data.data.location[2]; org = data.data.organization; break;
+                        case 'IP-API.com': ip = data.query; country = data.country; region = data.regionName; city = data.city; org = data.org; break;
+                        case '淘宝': ip = data.data.ip; country = '中国'; region = data.data.region; city = data.data.city; org = data.data.isp; break;
+                        case 'PCOnline': ip = data.ip; country = '中国'; region = data.pro; city = data.city; org = data.addr; break;
+                        case 'SeeIP.org': ip = data.ip; country = data.country; region = data.region; city = data.city; org = data.asn_organization; break;
+                    }
+                } else if (api.name === 'So-hu') {
+                    ip = data.cip;
+                    country = '中国';
+                    city = data.cname;
+                } else if (api.name === 'Cloudflare') {
+                    ip = data.ip;
+                    country = data.loc;
+                    org = 'Cloudflare';
+                }
+                
+                if (ip === 'N/A') {
+                    card.remove();
+                    return;
+                }
+
+                card.innerHTML = `
+                    <h3>${api.name}</h3>
+                    <div class="ip-details">
+                        <strong>IP 地址:</strong> <span>${ip || 'N/A'}</span>
+                        <strong>国家/地区:</strong> <span>${country || 'N/A'}</span>
+                        <strong>省份/州:</strong> <span>${region || 'N/A'}</span>
+                        <strong>城市:</strong> <span>${city || 'N/A'}</span>
+                        <strong>运营商:</strong> <span>${org || 'N/A'}</span>
+                    </div>
+                `;
+            })
+            .catch(error => {
+                console.error(`Error fetching from ${api.name}:`, error);
+                card.remove();
+            });
+    });
+});
+</script>
+
+</body>
+</html>
