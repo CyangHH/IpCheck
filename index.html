@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IP 地址与网络连通性检测</title>
+    <title>IP与网络连通性检测</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
@@ -18,7 +18,7 @@
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            max-width: 950px;
+            max-width: 1200px;
             margin: 0 auto;
         }
         h1 {
@@ -27,55 +27,138 @@
             margin-bottom: 25px;
             color: #1a1a1a;
         }
-        h2 {
-            color: #1a1a1a;
+        .header-with-button {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             border-bottom: 2px solid #eee;
             padding-bottom: 8px;
-            margin-top: 25px;
             margin-bottom: 15px;
+        }
+        .header-with-button h2 {
+            margin: 0;
+            color: #1a1a1a;
             font-size: 1.2em;
+            border-bottom: none; /* 避免双重下划线 */
+            padding-bottom: 0;
+        }
+        .refresh-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85em;
+            transition: background-color 0.2s;
+        }
+        .refresh-button:hover {
+            background-color: #0056b3;
+        }
+        /* 优化后的 H3 样式，更紧凑 */
+        h3 {
+            color: #1a1a1a;
+            margin-top: 15px;
+            margin-bottom: 8px; /* 减小标题与卡片的间距 */
+            font-size: 1em;
+            text-align: center;
         }
         .loading {
             color: #888;
             text-align: center;
             padding: 10px;
+            font-size: 0.85em;
         }
-        /* IP 结果网格布局 */
-        .ip-grid {
+
+        /* 优化点 1: IP 四栏横排容器 (保持良好响应性) */
+        .ip-quad-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 15px;
+            margin-bottom: 20px;
         }
-        .ip-card {
-            padding: 15px;
+
+        /* 优化点 2: 每个 IP 类别的包装器 - 确保其内部的 IP 结果能均匀填充空间 */
+        .ip-category-wrapper {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 优化点 3: 统一 IP 结果的包装器 (确保卡片高度统一的关键) */
+        .ip-grid {
+            flex-grow: 1;
+            display: flex; /* 允许内部卡片填充空间 */
+            flex-direction: column;
+        }
+        .card-container {
+            padding: 12px;
             border: 1px solid #e0e0e0;
             border-radius: 6px;
             background-color: #fdfdfd;
+            flex-grow: 1; /* 关键：确保卡片高度一致 */
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between; /* 使卡片内容在垂直方向上分隔 */
         }
-        .ip-card h3 {
-            margin: 0 0 10px 0;
-            font-size: 1em;
+        .card-container h4 {
+            margin: 0 0 8px 0;
+            font-size: 0.9em;
             font-weight: 600;
             color: #0056b3;
+            /* 服务商名称居中 */
+            text-align: center;
         }
-        /* IP 卡片内部详情布局 */
         .ip-details {
-            display: grid;
-            grid-template-columns: auto 1fr;
-            gap: 5px 10px;
-            font-size: 0.9em;
+            display: flex;
+            flex-direction: column;
+            font-size: 0.85em;
+        }
+
+        /* 优化点 4: 调整 IP 行的布局 -> IP 和 GEO 信息分两行且居中 */
+        .ip-line-wrapper {
+            display: flex;
+            flex-direction: column;
+            /* 核心修改：让 IP 地址和地理信息居中 */
+            align-items: center; 
+            text-align: center;
+            
+            margin-bottom: 5px;
+            border-bottom: 1px dashed #eee;
+            padding-bottom: 5px;
+        }
+
+        .ip-address {
+            font-size: 1.1em; /* 略微放大 IP 地址 */
+            font-weight: 700;
+            color: #1a1a1a;
+            word-break: break-all;
+            margin-bottom: 2px; /* IP地址和地理信息之间增加小间距 */
+        }
+
+        .geo-info {
+            font-size: 0.85em; /* 保持地理信息的可读性 */
+            color: #888; /* 使用柔和的颜色 */
+            word-break: break-word; /* 允许换行 */
+            line-height: 1.4;
+        }
+
+        /* 延迟信息行优化 */
+        .ip-details div:not(.ip-line-wrapper) {
+            /* 居中延迟信息 */
+            text-align: center;
         }
         .ip-details strong {
-            color: #555;
-            text-align: right;
+            color: #666;
+            font-weight: 500;
             white-space: nowrap;
         }
         .ip-details span {
             word-break: break-all;
-            color: #111;
+            color: #333;
+            font-weight: 600;
         }
 
-        /* 连通性列表 */
+        /* 连通性列表 (保持不变) */
         .connectivity-list {
             list-style: none;
             padding: 0;
@@ -90,6 +173,17 @@
         }
         .connectivity-list li:last-child {
             border-bottom: none;
+        }
+        .connectivity-list li span:first-child {
+            display: flex;
+            align-items: center;
+        }
+        .brand-icon {
+            width: 16px;
+            height: 16px;
+            margin-right: 8px;
+            border-radius: 3px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
         .status {
             display: flex;
@@ -121,26 +215,66 @@
             font-size: 0.85em;
             color: #999;
         }
+
+        /* 新增：响应式布局优化 */
+        @media (max-width: 992px) {
+            .ip-quad-grid {
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            }
+        }
+
+        @media (max-width: 576px) {
+            .ip-quad-grid {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>IP 地址与网络连通性检测</h1>
-
-    <h2>网络连通性</h2>
-    <ul class="connectivity-list" id="connectivity-results"></ul>
-
-    <h2>本机出口 IP</h2>
-    <h3>国内出口 IP</h3>
-    <div id="ip-results-cn" class="ip-grid">
-        <div class="loading">正在加载国内 IP 信息...</div>
+    <div class="header-with-button">
+        <h2>网络连通性</h2>
+        <button id="refreshConnectivity" class="refresh-button">重新测试</button>
+    </div>
+    <div class="card-container">
+        <ul class="connectivity-list" id="connectivity-results"></ul>
     </div>
 
-    <h3>国外出口 IP</h3>
-    <div id="ip-results-global" class="ip-grid">
-        <div class="loading">正在加载国外 IP 信息...</div>
+    <h2>IP</h2>
+    <div class="ip-quad-grid">
+
+        <div class="ip-category-wrapper">
+            <h3>国内 IPv4</h3>
+            <div id="domestic-ipv4" class="ip-grid">
+                <div class="loading">正在加载...</div>
+            </div>
+        </div>
+
+        <div class="ip-category-wrapper">
+            <h3>国外 IPv4</h3>
+            <div id="global-ipv4" class="ip-grid">
+                <div class="loading">正在加载...</div>
+            </div>
+        </div>
+        
+        <div class="ip-category-wrapper">
+            <h3>国内 IPv6</h3>
+            <div id="domestic-ipv6" class="ip-grid">
+                <div class="loading">正在加载...</div>
+            </div>
+        </div>
+
+        <div class="ip-category-wrapper">
+            <h3>国外 IPv6</h3>
+            <div id="global-ipv6" class="ip-grid">
+                <div class="loading">正在加载...</div>
+            </div>
+        </div>
+
     </div>
+
+    <hr>
 </div>
 
 <div class="footer">
@@ -149,152 +283,255 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    // IP 服务 API 列表
+    // IP 查询服务列表
     const ipApis = [
-        // 国内 IP 服务
-        { name: 'IPIP.NET (Free)', url: 'https://myip.ipip.net/json', type: 'json', isDomestic: true },
-        { name: 'PCOnline', url: 'https://whois.pconline.com.cn/ipJson.jsp', type: 'json', isDomestic: true },
-        { name: '淘宝', url: 'https://ip.taobao.com/outGetIpInfo?accessKey=alibaba-inc&ip=myip', type: 'json', isDomestic: true },
-        { name: 'So-hu', url: 'https://pv.sohu.com/cityjson', type: 'text', isDomestic: true },
+        // 国内服务商
+        { name: 'Yinghualuo (v4 JSON)', url: 'https://v4.yinghualuo.cn/bejson', type: 'json', isDomestic: true },
+        { name: 'Yinghualuo (v6 JSON)', url: 'https://v6.yinghualuo.cn/bejson', type: 'json', isDomestic: true, forceV6: true },
 
-        // 国际 IP 服务
-        { name: 'IP.SB', url: 'https://api.ip.sb/geoip', type: 'json' },
+        // 国际服务商 (IPv4/v6 通用)
         { name: 'IPInfo', url: 'https://ipinfo.io/json', type: 'json' },
-        { name: 'IP-API.com', url: 'https://ip-api.com/json', type: 'json' },
-        { name: 'Cloudflare', url: 'https://www.cloudflare.com/cdn-cgi/trace', type: 'text' },
-        { name: 'SeeIP.org', url: 'https://api.seeip.org/jsonip', type: 'json' }
+        { name: 'IP.SB', url: 'https://api.ip.sb/geoip', type: 'json' },
+        
+        // 国际 IPv6 服务商 (纯文本返回)
+        { name: 'Ipify (IPv6)', url: 'https://api64.ipify.org', type: 'text', forceV6: true }, 
     ];
 
-    const testUrls = [
-        { name: '百度 (Baidu)', url: 'https://www.baidu.com/favicon.ico' },
-        { name: '网易云音乐 (Netease)', url: 'https://music.163.com/favicon.ico' },
-        { name: 'GitHub', url: 'https://github.com/favicon.ico' },
-        { name: 'YouTube', url: 'https://www.youtube.com/favicon.ico' }
+    // 连通性测试 URL 列表 (已去除谷歌)
+    const originalTestUrls = [
+        { name: '百度', url: 'https://www.baidu.com/favicon.ico', icon: 'https://www.baidu.com/favicon.ico' },
+        { name: '网易云音乐', url: 'https://music.163.com/favicon.ico', icon: 'https://music.163.com/favicon.ico' },
+        { name: 'GitHub', url: 'https://github.com/favicon.ico', icon: 'https://github.githubassets.com/favicons/favicon.svg' },
+        { name: 'YouTube', url: 'https://www.youtube.com/favicon.ico', icon: 'https://www.youtube.com/favicon.ico' },
     ];
 
-    const cnContainer = document.getElementById('ip-results-cn');
-    const globalContainer = document.getElementById('ip-results-global');
+    // 获取容器元素
+    const containers = {
+        domesticV4: document.getElementById('domestic-ipv4'),
+        domesticV6: document.getElementById('domestic-ipv6'),
+        globalV4: document.getElementById('global-ipv4'),
+        globalV6: document.getElementById('global-ipv6')
+    };
     const connectivityResultsContainer = document.getElementById('connectivity-results');
+    const refreshButton = document.getElementById('refreshConnectivity');
+
+    // **关键设置：将所有 IP 限制设置为 1 (只显示每类 IP 的第一个成功结果)**
+    const limits = { domesticV4: 1, domesticV6: 1, globalV4: 1, globalV6: 1 };
+    
     const TIMEOUT = 5000;
 
-    cnContainer.innerHTML = '';
-    globalContainer.innerHTML = '';
+    // SVG 图标 (保持不变)
+    const successIconSvg = `<svg class="status-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor"><path d="M470.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L192 338.7 425.4 105.4c12.5-12.5 32.8-12.5 45.3 0z"/></svg>`;
+    const errorIconSvg = `<svg class="status-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor"><path d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM175 175c9.4-9.4 24.6-9.4 33.9 0l47 47 47-47c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9l-47 47 47 47c9.4 9.4 9.4 24.6 0 33.9s-24.6 9.4-33.9 0l-47-47-47 47c-9.4 9.4-24.6 9.4-33.9 0s-9.4-24.6 0-33.9l47-47-47-47c-9.4-9.4-9.4-24.6 0-33.9z"/></svg>`;
 
-    // 定义 SVG 成功图标
-    const successIconSvg = `<svg class="status-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-      <path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425a.247.247 0 0 1 .02-.022Z"/>
-    </svg>`;
-    // 定义 SVG 错误图标
-    const errorIconSvg = `<svg class="status-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-      <path d="M11.414 11.414a.5.5 0 0 0 .707.707L15 12.707l-2.879 2.879a.5.5 0 0 0 .707.707L15.707 13.414a.5.5 0 0 0-.707-.707L12 14.293l-2.879-2.879a.5.5 0 0 0-.707.707L11.293 15 .586 1.293a.5.5 0 0 0-.707.707L11.414 11.414z"/>
-      <path d="M12.707 13.414a.5.5 0 0 0-.707-.707L10 14.293l-2.879-2.879a.5.5 0 0 0-.707.707L9.293 15 .586 1.293a.5.5 0 0 0-.707.707L12.707 13.414z"/>
-      <path d="M11.414 4.586a.5.5 0 0 0 .707.707L15 6.293l-2.879 2.879a.5.5 0 0 0 .707.707L15.707 7.414a.5.5 0 0 0-.707-.707L12 8.293l-2.879-2.879a.5.5 0 0 0-.707.707L11.293 9.707 4.586.293a.5.5 0 0 0-.707.707L11.414 4.586z"/>
-      <path d="M12.707 7.414a.5.5 0 0 0-.707-.707L10 8.293l-2.879-2.879a.5.5 0 0 0-.707.707L9.293 9.707 4.586.293a.5.5 0 0 0-.707.707L12.707 7.414z"/>
-      <path d="M4.586 11.414a.5.5 0 0 0 .707.707L8 12.707l-2.879 2.879a.5.5 0 0 0 .707.707L8.707 13.414a.5.5 0 0 0-.707-.707L5 14.293l-2.879-2.879a.5.5 0 0 0-.707.707L4.293 15 .586 1.293a.5.5 0 0 0-.707.707L4.586 11.414z"/>
-      <path d="M6.293 12.707a.5.5 0 0 0-.707-.707L3 13.414l-2.879-2.879a.5.5 0 0 0-.707.707L2.293 15 .586 1.293a.5.5 0 0 0-.707.707L6.293 12.707z"/>
-    </svg>`;
+    function clearContainer(container) {
+        container.innerHTML = `<div class="loading">正在加载...</div>`;
+    }
+    
+    function clearLoading(container) {
+        const loadingElement = container.querySelector('.loading');
+        if (loadingElement) {
+            loadingElement.remove();
+        }
+    }
 
-
-    // 连通性测试
-    testUrls.forEach(site => {
-        const listItem = document.createElement('li');
-        listItem.innerHTML = `<span>${site.name}</span><span class="status status-loading">测试中...</span>`;
-        connectivityResultsContainer.appendChild(listItem);
-        
+    // 通用 IP 查询函数
+    async function fetchIp(api) {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), TIMEOUT);
-        const startTime = performance.now();
 
-        fetch(site.url + '?t=' + new Date().getTime(), { mode: 'no-cors', cache: 'no-store', signal: controller.signal })
-            .then(() => {
-                const latency = Math.round(performance.now() - startTime);
-                const statusSpan = listItem.querySelector('.status');
-                statusSpan.innerHTML = `${successIconSvg} 可访问 <span class="latency">(${latency} ms)</span>`;
-                statusSpan.className = 'status status-ok';
-            })
-            .catch(error => {
-                const statusSpan = listItem.querySelector('.status');
-                statusSpan.innerHTML = `${errorIconSvg} ${error.name === 'AbortError' ? '超时' : '无法访问'}`;
-                statusSpan.className = 'status status-error';
-            })
-            .finally(() => clearTimeout(timeoutId));
-    });
+        let ip = 'N/A', country = 'N/A', region = 'N/A', city = 'N/A', org = 'N/A', type = 'N/A';
 
-    // IP 查询
-    ipApis.forEach(api => {
-        const card = document.createElement('div');
-        card.className = 'ip-card';
-        card.innerHTML = `<div class="loading">${api.name} 查询中...</div>`;
-        
-        let container = api.isDomestic ? cnContainer : globalContainer;
-        container.appendChild(card);
+        try {
+            let data;
+            const response = await fetch(api.url, { cache: 'no-store', signal: controller.signal });
+            if (!response.ok) throw new Error('Network response was not ok');
+            data = await (api.type === 'text' ? response.text() : response.json());
 
-        fetch(api.url, { cache: 'no-store' })
-            .then(response => {
-                if (!response.ok) throw new Error('Network response was not ok');
-                // 特殊处理 So-hu 和 Cloudflare
-                if (api.name === 'So-hu') {
-                    return response.text().then(text => {
-                        const jsonText = text.replace('var returnCitySN = ', '').replace(/;/g, '');
-                        return JSON.parse(jsonText);
-                    });
-                } else if (api.name === 'Cloudflare') {
-                    return response.text().then(text => {
-                        const lines = text.split('\n');
-                        const traceData = {};
-                        lines.forEach(line => {
-                            const [key, value] = line.split('=');
-                            if (key) traceData[key] = value;
-                        });
-                        return traceData;
-                    });
-                }
-                return api.type === 'text' ? response.text() : response.json();
-            })
-            .then(data => {
-                let ip = 'N/A', country = 'N/A', region = 'N/A', city = 'N/A', org = 'N/A';
+            // 数据解析逻辑
+            switch(api.name) {
+                // 国内 Yinghualuo API 解析
+                case 'Yinghualuo (v4 JSON)': 
+                case 'Yinghualuo (v6 JSON)': 
+                    ip = data.ip || data.addr;
+                    country = data.country || '中国'; 
+                    region = data.region || 'N/A'; 
+                    city = data.area || 'N/A'; // 使用 area 字段作为城市信息
+                    org = data.isp || data.org || 'N/A'; 
+                    break;
 
-                if (api.type === 'json') {
-                    switch(api.name) {
-                        case 'IP.SB': ip = data.ip; country = data.country; region = data.region; city = data.city; org = data.organization; break;
-                        case 'IPInfo': ip = data.ip; country = data.country; region = data.region; city = data.city; org = data.org; break;
-                        case 'IPIP.NET (Free)': ip = data.data.ip; country = data.data.location[0]; region = data.data.location[1]; city = data.data.location[2]; org = data.data.organization; break;
-                        case 'IP-API.com': ip = data.query; country = data.country; region = data.regionName; city = data.city; org = data.org; break;
-                        case '淘宝': ip = data.data.ip; country = '中国'; region = data.data.region; city = data.data.city; org = data.data.isp; break;
-                        case 'PCOnline': ip = data.ip; country = '中国'; region = data.pro; city = data.city; org = data.addr; break;
-                        case 'SeeIP.org': ip = data.ip; country = data.country; region = data.region; city = data.city; org = data.asn_organization; break;
-                    }
-                } else if (api.name === 'So-hu') {
-                    ip = data.cip;
-                    country = '中国';
-                    city = data.cname;
-                } else if (api.name === 'Cloudflare') {
-                    ip = data.ip;
-                    country = data.loc;
-                    org = 'Cloudflare';
-                }
+                // 国际 API 解析
+                case 'IPInfo': ip = data.ip; country = data.country; region = data.region; city = data.city; org = data.org; break;
+                case 'IP.SB': ip = data.ip; country = data.country; region = data.region; city = data.city; org = data.organization; break;
                 
-                if (ip === 'N/A') {
-                    card.remove();
-                    return;
+                // Ipify 纯文本 IPv6 解析
+                case 'Ipify (IPv6)': ip = data.trim(); country = 'N/A (仅IP)'; region = 'N/A'; city = 'N/A'; break;
+            }
+
+            if (!ip || ip === 'N/A') {
+                throw new Error('IP not found in response');
+            }
+
+            // 判断 IP 协议类型
+            type = ip.includes(':') ? 'IPv6' : 'IPv4';
+
+            // 修正国家/地区信息，如果是中国，则标记为国内
+            const isDomestic = api.isDomestic || (country && (country.includes('中国') || country.includes('China') || country.includes('CN')));
+
+            return { api, ip, country: country || 'N/A', region: region || 'N/A', city: city || 'N/A', org: org || 'N/A', type, latency: -1, isDomestic };
+
+        } catch (error) {
+            clearTimeout(timeoutId);
+            return null;
+        }
+    }
+
+    // 渲染 IP 信息到页面 (保持不变)
+    function renderIpCard(result, container) {
+        const card = document.createElement('div');
+        card.className = 'card-container';
+
+        // 延迟信息
+        let latencyInfo = result.latency !== -1 ?
+            `<div><strong>延迟:</strong> <span>${result.latency} ms</span></div>`
+            : '';
+
+        // 格式化地理信息
+        let geoText = result.country;
+        if (result.region && result.region !== 'N/A' && result.country !== result.region) {
+            geoText = result.region; // 优先显示省份
+        }
+        // 城市信息合并
+        if (result.city && result.city !== 'N/A' && result.city !== result.region) {
+            geoText += ' ' + result.city;
+        }
+        // 如果不是国内IP，则加上国家名
+        if (!result.isDomestic && result.country && result.country !== 'N/A') {
+             geoText = result.country + (geoText.trim() ? ' / ' + geoText.trim() : '');
+        } else if (result.isDomestic) {
+            // 国内 IP 仅显示 省份 城市
+            geoText = (result.region && result.region !== 'N/A' ? result.region : '') +
+                      (result.city && result.city !== 'N/A' ? ' ' + result.city : '');
+        }
+        geoText = geoText.trim();
+
+
+        // 渲染模板 (IP 地址和地理信息分到两个独立的 div 中，并通过 CSS 居中)
+        card.innerHTML = `
+            <h4>${result.api.name}</h4>
+            <div class="ip-details">
+                <div class="ip-line-wrapper">
+                    <div class="ip-address">${result.ip}</div>
+                    <div class="geo-info">${geoText}</div>
+                </div>
+                ${latencyInfo}
+            </div>
+        `;
+        container.appendChild(card);
+    }
+
+    // **IP 地址刷新函数**
+    async function fetchAndRenderAllIps(apis) {
+        // 重置所有容器状态
+        let counts = { domesticV4: 0, domesticV6: 0, globalV4: 0, globalV6: 0 };
+        Object.values(containers).forEach(clearContainer);
+        
+        const results = await Promise.allSettled(apis.map(api => fetchIp(api)));
+
+        results.forEach(settledResult => {
+            if (settledResult.status === 'fulfilled' && settledResult.value) {
+                const result = settledResult.value;
+
+                let containerKey;
+
+                if (result.isDomestic) {
+                    containerKey = result.type === 'IPv6' ? 'domesticV6' : 'domesticV4';
+                } else {
+                    containerKey = result.type === 'IPv6' ? 'globalV6' : 'globalV4';
                 }
 
-                card.innerHTML = `
-                    <h3>${api.name}</h3>
-                    <div class="ip-details">
-                        <strong>IP 地址:</strong> <span>${ip || 'N/A'}</span>
-                        <strong>国家/地区:</strong> <span>${country || 'N/A'}</span>
-                        <strong>省份/州:</strong> <span>${region || 'N/A'}</span>
-                        <strong>城市:</strong> <span>${city || 'N/A'}</span>
-                        <strong>运营商:</strong> <span>${org || 'N/A'}</span>
-                    </div>
-                `;
-            })
-            .catch(error => {
-                console.error(`Error fetching from ${api.name}:`, error);
-                card.remove();
-            });
-    });
+                const container = containers[containerKey];
+                const limit = limits[containerKey];
+
+                // 仅在未达到限制时渲染 (只显示第一个成功结果)
+                if (counts[containerKey] < limit) {
+                    clearLoading(container);
+                    renderIpCard(result, container);
+                    counts[containerKey]++;
+                }
+            }
+        });
+
+        // 检查所有容器，如果仍是加载状态（即没有成功结果），则显示“未找到”
+        Object.keys(containers).forEach(key => {
+            const container = containers[key];
+            if (container.children.length === 0 || (container.children.length === 1 && container.children[0].className.includes('loading'))) {
+                const protocol = key.includes('V4') ? 'IPv4' : 'IPv6';
+                const location = key.includes('domestic') ? '国内' : '国外';
+                container.innerHTML = `<div class="loading">未找到有效的 ${location} ${protocol} IP。</div>`;
+            }
+        });
+    }
+
+    // **连通性测试函数**
+    function runConnectivityTest() {
+        // 清空列表并重新添加加载状态
+        connectivityResultsContainer.innerHTML = ''; 
+
+        originalTestUrls.forEach(site => {
+            const listItem = document.createElement('li');
+            listItem.innerHTML = `
+                <span>
+                    <img src="${site.icon}" class="brand-icon" alt="${site.name} icon">
+                    ${site.name}
+                </span>
+                <span class="status status-loading">测试中...</span>
+            `;
+            connectivityResultsContainer.appendChild(listItem);
+
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), TIMEOUT);
+            const startTime = performance.now();
+
+            // 尝试加载资源以测试连通性和延迟
+            fetch(site.url + '?t=' + new Date().getTime(), { mode: 'no-cors', cache: 'no-store', signal: controller.signal })
+                .then(() => {
+                    const latency = Math.round(performance.now() - startTime);
+                    const statusSpan = listItem.querySelector('.status');
+                    statusSpan.innerHTML = `${successIconSvg} 可访问 <span class="latency">(${latency} ms)</span>`;
+                    statusSpan.className = 'status status-ok';
+                })
+                .catch(error => {
+                    const statusSpan = listItem.querySelector('.status');
+                    statusSpan.innerHTML = `${errorIconSvg} ${error.name === 'AbortError' ? '超时' : '无法访问'}`;
+                    statusSpan.className = 'status status-error';
+                })
+                .finally(() => clearTimeout(timeoutId));
+        });
+    }
+
+    // **总刷新函数 (同时刷新 IP 和连通性)**
+    function refreshAll() {
+        refreshButton.disabled = true; // 禁用按钮防止重复点击
+        refreshButton.textContent = "正在刷新...";
+        
+        // 并行执行两个主要任务
+        Promise.all([
+            fetchAndRenderAllIps(ipApis),
+            runConnectivityTest()
+        ]).finally(() => {
+            // 所有任务完成后恢复按钮
+            refreshButton.disabled = false;
+            refreshButton.textContent = "重新测试";
+        });
+    }
+
+
+    // 绑定刷新按钮事件
+    refreshButton.addEventListener('click', refreshAll);
+
+    // 页面加载后执行第一次测试
+    refreshAll();
 });
 </script>
 
