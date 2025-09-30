@@ -526,17 +526,23 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), TIMEOUT);
-            const startTime = performance.now();
+            // Allow more time for two sequential requests
+            const timeoutId = setTimeout(() => controller.abort(), TIMEOUT * 2);
             
-            // 进行连通性测试
+            // Perform the first "warm-up" fetch
             fetch(site.url + '?t=' + new Date().getTime(), { mode: 'no-cors', cache: 'no-store', signal: controller.signal })
                 .then(() => {
-                    const latency = Math.round(performance.now() - startTime);
-                    statusSpan.innerHTML = `${successIconSvg} 可访问 <span class="latency">(${latency} ms)</span>`;
-                    statusSpan.className = 'status status-ok';
+                    // If the warm-up is successful, perform the second, measured fetch
+                    const startTime = performance.now();
+                    return fetch(site.url + '?t=' + new Date().getTime(), { mode: 'no-cors', cache: 'no-store', signal: controller.signal })
+                        .then(() => {
+                            const latency = Math.round(performance.now() - startTime);
+                            statusSpan.innerHTML = `${successIconSvg} 可访问 <span class="latency">(${latency} ms)</span>`;
+                            statusSpan.className = 'status status-ok';
+                        });
                 })
                 .catch(error => {
+                    // This catches failure from either the first or the second fetch
                     statusSpan.innerHTML = `${errorIconSvg} ${error.name === 'AbortError' ? '超时' : '无法访问'}`;
                     statusSpan.className = 'status status-error';
                 })
