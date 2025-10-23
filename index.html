@@ -408,7 +408,7 @@ document.addEventListener('DOMContentLoaded', () => {
 			ip = data.ip ;
             country = data.country.name || 'N/A'; 
 			region=data.regions.length > 0 ? data.regions[0] :'N/A'; 
-            city = data.regions.length >= 1 ? data.regions[data.regions.length-1] : 'N/A'; 
+            city = data.regions.length > 1 ? data.regions[data.regions.length-1] : 'N/A'; 
 			//org =  data.as.info ? 'AS'+data.as.number+' '+data.as.info : 'AS'+data.as.number+' '+data.as.name || 'N/A';  
             asn = data.as.number+'';
 			org =  data.as.info || data.as.name || 'N/A';         
