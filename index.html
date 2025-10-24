@@ -403,7 +403,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function clearLoading(container) {
-        const loadingElement = container.querySelector('.loading');
+        const loadingElement = container.querySelector('.card-container');
         if (loadingElement) {
             loadingElement.remove();
         }
@@ -527,7 +527,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (promises.length === 0) {
                  const protocol = key.includes('V4') ? 'IPv4' : 'IPv6';
                  const location = key.includes('domestic') ? '国内' : '国外';
-                 container.innerHTML = `<div class="loading">暂无 ${location} ${protocol} API。</div>`;
+                 container.innerHTML = `<div class="card-container"><div class="loading">暂无 ${location} ${protocol} API。</div></div>`;
                  continue;
             }
 
