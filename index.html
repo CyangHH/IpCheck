@@ -547,7 +547,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } catch (error) {
                 const protocol = key.includes('V4') ? 'IPv4' : 'IPv6';
                 const location = key.includes('domestic') ? '国内' : '国外';
-                container.innerHTML = `<div class="card-container"><div class="loading">未能查询到 ${location} ${protocol} IP</div></div>`;
+                container.innerHTML = `<div class="card-container"><div class="loading">未能查询到 ${location} ${protocol}</div></div>`;
             }
         }
     }
