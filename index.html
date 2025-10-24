@@ -293,7 +293,7 @@
 
 <div class="container">
     <div class="header-with-button">
-        <h2>网络检测</h2>
+        <h2>国内外IPv4/IPv6分流查询</h2>
         <button id="refreshConnectivity" class="refresh-button">重新测试</button>
     </div>
     <div class="card-container">
@@ -639,7 +639,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 总刷新函数
     function refreshAll() {
         refreshButton.disabled = true; 
-        refreshButton.textContent = "正在刷新...";
+        refreshButton.textContent = "正在测试...";
         
         // IP 查询和连通性测试并发执行
         Promise.all([
