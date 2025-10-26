@@ -71,6 +71,10 @@
             padding: 35px;
             font-size: 0.85em;
         }
+		.loading a{
+            color: #888;
+            font-size: 0.85em;
+        }
 
         .ip-quad-grid {
             display: grid;
@@ -294,7 +298,7 @@
 <div class="container">
     <div class="header-with-button">
         <h2>国内外IPv4/IPv6分流查询</h2>
-        <button id="refreshConnectivity" class="refresh-button">重新测试</button>
+        <button id="refreshConnectivity" class="refresh-button">刷新</button>
     </div>
     <div class="card-container">
         <ul class="connectivity-list" id="connectivity-results"></ul>
@@ -423,8 +427,10 @@ document.addEventListener('DOMContentLoaded', () => {
             data = await (api.type === 'text' ? response.text() : response.json());
 			ip = data.ip ;
             country = data.country.name || 'N/A'; 
-			region=data.regions.length > 0 ? data.regions[0] :'N/A'; 
-            city = data.regions.length > 1 ? data.regions[data.regions.length-1] : 'N/A'; 
+			if(data.regions){
+				region=data.regions.length > 0 ? data.regions[0] :'N/A'; 
+				city = data.regions.length > 1 ? data.regions[data.regions.length-1] : 'N/A'; 
+			}
 			//org =  data.as.info ? 'AS'+data.as.number+' '+data.as.info : 'AS'+data.as.number+' '+data.as.name || 'N/A';  
             asn = data.as.number+'';
 			org =  data.as.info || data.as.name || 'N/A';         
@@ -468,8 +474,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (result.city && result.city !== 'N/A' && result.city !== result.region) {
             geoText += ' ' + result.city;
         }
-        if (!result.isDomestic && result.country && result.country !== 'N/A') {
-              geoText = result.country + (geoText.trim() ? ' ' + geoText.trim() : '');
+        if (!result.isDomestic && result.country && result.country !== 'N/A' )  {
+			if(result.city !== 'N/A' ||  result.region !== 'N/A')
+			{
+				geoText = result.country + (geoText.trim() ? ' ' + geoText.trim() : '');
+			}
+
         } else if (result.isDomestic) {
             geoText = (result.region && result.region !== 'N/A' ? result.region : '') +
                       (result.city && result.city !== 'N/A' ? ' ' + result.city : '');
@@ -547,7 +557,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } catch (error) {
                 const protocol = key.includes('V4') ? 'IPv4' : 'IPv6';
                 const location = key.includes('domestic') ? '国内' : '国外';
-                container.innerHTML = `<div class="card-container"><div class="loading">未能查询到 ${location} ${protocol}</div></div>`;
+                container.innerHTML = `<div class="card-container"><div class="loading">未能查询到 ${location} ${protocol}  <a href="https://github.com/CyangHH/IpCheck/issues/new" title="该数据有问题?" target="_blank">*反馈</a></div></div>`; 
             }
         }
     }
@@ -631,7 +641,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 总刷新函数
     function refreshAll() {
         refreshButton.disabled = true; 
-        refreshButton.textContent = "正在测试...";
+        refreshButton.textContent = "正在刷新...";
         
         // IP 查询和连通性测试并发执行
         Promise.all([
@@ -639,7 +649,7 @@ document.addEventListener('DOMContentLoaded', () => {
             runConnectivityTest()
         ]).finally(() => {
             refreshButton.disabled = false;
-            refreshButton.textContent = "重新测试";
+            refreshButton.textContent = "刷新";
         });
     }
 
