@@ -63,14 +63,14 @@ docker network create --ipv6 --subnet="fd00:1:2:3::/64" my-ipv6-network
  docker run -d \
   --name checkip \
   --network my-ipv6-network \
-  -p 0.0.0.0:8000:8080 -p [::]:8000:8000 cyang/checkip
+  -p 0.0.0.0:8000:8080 -p [::]:8000:8080 cyang/checkip
  
  如果使用nginx反代，可以让该实例保持仅本机访问
  
  docker run -d \
   --name checkip \
   --network my-ipv6-network \
-  -p 127.0.0.1:8000:8080 -p [::1]:8080:8000 cyang/checkip
+  -p 127.0.0.1:8000:8080 -p [::1]:8000:8080 cyang/checkip
   
 
   
