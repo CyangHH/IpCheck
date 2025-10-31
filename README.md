@@ -30,6 +30,20 @@
  
  #### 关于docker部署
  
+ 开启IPV6
+ 
+ vim /etc/docker/daemon.json
+  
+{
+  "ipv6": true,
+  "fixed-cidr-v6": "fd00::/64",
+  "log-driver": "none"
+}
+
+docker network create --ipv6 --subnet="fd00:1:2:3::/64" my-ipv6-network
+
+-------------------------------------
+ 
   docker run -d -p 8000:80 netart/ipapi
  
  原作者的docker镜像，IPV6部分有问题，没有监听IPV6地址
@@ -42,27 +56,16 @@
  
  再启动一个实例监听 IPV6地址。
  
- 你也可以使用我修改的，使用方法如下：
+ -----------------------------
  
- 开启IPV6
- 
- vim /etc/docker/daemon.json
-  
-{
-  "ipv6": true,
-  "fixed-cidr-v6": "fd00::/64",
-  "log-driver": "none"
-}
-
-docker network create --ipv6 --subnet="fd00:1:2:3::/64" my-ipv6-network
- 
+ 你也可以使用我修改的镜像，使用 Gunicorn替换uvicorn命令，以确保正确可靠的 IPv4/IPv6 双栈绑定，使用方法如下：
  
  docker run -d \
   --name checkip \
   --network my-ipv6-network \
   -p 0.0.0.0:8000:8080 -p [::]:8000:8000 cyang/checkip
  
- 如果使用nginx反代，请让该实例保持仅本机访问
+ 如果使用nginx反代，可以让该实例保持仅本机访问
  
  docker run -d \
   --name checkip \
