@@ -28,9 +28,9 @@
 
  [https://github.com/ljxi/GeoCN](https://github.com/ljxi/GeoCN) 
  
- #### 关于docker部署
+ #### 关于IPDB docker部署
  
- 开启IPV6
+ 开启docker IPV6支持
  
  vim /etc/docker/daemon.json
   

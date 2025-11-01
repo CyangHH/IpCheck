@@ -432,8 +432,11 @@ document.addEventListener('DOMContentLoaded', () => {
 				city = data.regions.length > 1 ? data.regions[data.regions.length-1] : 'N/A'; 
 			}
 			//org =  data.as.info ? 'AS'+data.as.number+' '+data.as.info : 'AS'+data.as.number+' '+data.as.name || 'N/A';  
-            asn = data.as.number+'';
-			org =  data.as.info || data.as.name || 'N/A';         
+			if(data.as)
+			{
+				asn = data.as.number ? data.as.number+'' : 'N/A';  
+				org =  data.as.info || data.as.name || 'N/A';  
+			}			
             // 验证 IP 类型是否符合预期 
             const actualType = ip.includes(':') ? 'v6' : 'v4';
             if (api.protocol && api.protocol !== actualType) {
