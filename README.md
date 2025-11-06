@@ -45,16 +45,18 @@ docker network create --ipv6 --subnet="fd00:1:2:3::/64" my-ipv6-network
 -------------------------------------
  
   docker run -d -p 8000:80 netart/ipapi
+
+  原作者的意思使用nginx反代用，让nginx负责把真实地址写入xff里面，这样用ipv4回源也可以查询IPV6
  
- 原作者的docker镜像，IPV6部分有问题，没有监听IPV6地址
+ ~~原作者的docker镜像，IPV6部分有问题，没有监听IPV6地址~~
  
- 请修改 update_and_restart.sh
+ ~~请修改 update_and_restart.sh~~
  
- 在sleep 86400; 上面添加
+ ~~在sleep 86400; 上面添加~~
  
- nohup uvicorn main:app --host :: --port 8080 --no-server-header --proxy-headers &
+ ~~nohup uvicorn main:app --host :: --port 8080 --no-server-header --proxy-headers &~~
  
- 再启动一个实例监听 IPV6地址。
+ ~~再启动一个实例监听 IPV6地址。~~
  
  -----------------------------
  
